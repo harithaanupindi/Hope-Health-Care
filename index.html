@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Hope Health Care</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Style the navbar background */
+        .background {
+            background-color: #333;
+            padding: 10px 0;
+        }
+
+        /* Style the navigation list */
+        .nav-list {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        .nav-list li {
+            display: inline;
+            margin: 0 10px;
+        }
+
+        /* Style the links */
+        .nav-list li a {
+            text-decoration: none;
+            color: #fff;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        /* Style the login and sign-up buttons */
+        .log,
+        .sign-up {
+            background-color: #007BFF;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+
+        .log a,
+        .sign-up a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* Style the search input and button */
+        .rightNav {
+            float: right;
+            margin-top: 5px;
+        }
+
+        #search {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .btn-sm {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        /* Add full-width background image */
+        body {
+            background-image: url("static/index.png");
+            background-size: cover;
+            background-repeat: no-repeat;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Style the header */
+        .header {
+            text-align: center;
+            padding: 50px 0;
+            color: #fff;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 24px;
+        }
+
+        /* Style the container for content sections */
+        .container {
+            background-color: rgba(255, 71, 71, 0.2);
+            padding: 40px;
+            border-radius: 10px;
+            color: #333;
+            margin: 20px;
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .container:hover {
+            transform: scale(1.05);
+        }
+
+        .container h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .container p {
+            font-size: 16px;
+        }
+
+        /* Style the appointment booking section */
+        .appointment {
+            background-color: #15cedf;
+            padding: 40px;
+            border-radius: 10px;
+            color: #fff;
+            margin: 20px;
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .appointment:hover {
+            transform: scale(1.05);
+        }
+
+        .appointment h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .appointment p {
+            font-size: 16px;
+        }
+
+        /* Style the footer */
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            background-color: #333;
+            color: #fff;
+        }
+
+        /* Add additional styles as needed */
+    </style>
+</head>
+
+<body>
+    <nav class="navbar background">
+        <ul class="nav-list">
+            <li><a href="/contact">About Us</a></li>
+            <li><a href="/about">Contact Us</a></li>
+            <li><a href="/login_form">Sign in</a></li>
+            <li><a href="/sign_up">Sign up</a></li>
+        </ul>
+    </nav>
+
+    <header class="header">
+        <h1>Welcome to Hope Health Care</h1>
+        <p>Book a visit with us</p>
+    </header>
+
+    <div class="container">
+        <h1>General Physicians</h1>
+        <p>Consult our general physicians for comprehensive health assessments and primary care services.</p>
+    </div>
+
+    <div class="container">
+        <h1>Cardiologists</h1>
+        <p>Our experienced cardiologists are here to provide top-notch heart care.</p>
+    </div>
+
+    <div class="container">
+        <h1>Orthopedic Surgeons</h1>
+        <p>Consult our orthopedic surgeons for expert musculoskeletal care.</p>
+    </div>
+
+    <div class="container">
+        <h1>Neurologists</h1>
+        <p>Meet our neurologists for comprehensive neurological evaluations and treatments.</p>
+    </div>
+
+    <div class="container">
+        <h1>Gynaecologists</h1>
+        <p>Our dedicated team of gynecologists provides expert care for women's reproductive health and wellness.</p>
+    </div>
+
+    <div class="container">
+        <h1>Ophthalmologists</h1>
+        <p>Consult our ophthalmologists for comprehensive eye care, vision assessments, and eye surgeries.</p>
+    </div>
+
+    <div class="appointment">
+        <h1>Appointment Scheduling</h1>
+        <p>Book an appointment with us to get the most out of one-on-one sessions.</p>
+        <button class="bk"><a href="bookc">Book Now</a></button>
+    </div>
+
+    <footer class="footer">
+        &copy; 2023 Hope Health Care. All rights reserved.
+    </footer>
+</body>
+
+</html>
