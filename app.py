@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.secret_key='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'
 logging.basicConfig(filename='record.log', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 dbname = 'User'
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://postgres:Hillgrange@localhost:5432/User'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5433/User'
 #app.config['SQLALCHEMY_DATABASE_URL'] = 'postgres://username:password@localhost:5432/dbname'
 
 db = SQLAlchemy(app)
@@ -206,12 +206,9 @@ def logg():
                     app.logger.warning('User has successfully logged in.')
                     return render_template('index2.html', ans="Logged in successfully.")
                 else:
-                    app.logger.warning('Salt entry not found for the given user.')
+                    app.logger.warning('entry not found for the given user.')
                     return "Invalid username or password"
-    authorization_url, state=flow.authorization_url()
-    session["state"]= state
     app.logger.info("login page accessed")
-    return redirect(authorization_url)
     return render_template('login_form.html')
     
 
