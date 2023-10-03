@@ -407,6 +407,7 @@ def slogg():
                     return "Invalid username or password"
     app.logger.info("login page accessed")
     return render_template('slogin.html')
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
