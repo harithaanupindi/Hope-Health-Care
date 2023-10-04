@@ -1,157 +1,289 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from oauthlib.oauth2 import WebApplicationClient
-from flask_oauthlib.client import OAuth
-from werkzeug.security import generate_password_hash, check_password_hash 
-
+from datetime import datetime
+import datetime
+import bcrypt
+import re
+import mask as mask
+import logging
+from google_auth_oauthlib.flow import Flow
+import os
+import pathlib
+from authlib.integrations.flask_client import OAuth
+from authlib.oauth2 import OAuth2Error
+import google.oauth2.credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+import googleapiclient.discovery
+from google_auth_oauthlib import flow as google_auth_flow
 app = Flask(__name__)
-app.secret_key = '38984c9a11888697f6b274d3e52e8f53'
+app.secret_key='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'
+logging.basicConfig(filename='record.log', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+dbname = 'User'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5433/User'
+db = SQLAlchemy(app)
 
-# Configure your SQLAlchemy database URI here
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Hillgrange@localhost:5433/Registration'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy()
-db.init_app(app)
-migrate = Migrate(app, db)
+class Loginn(db.Model):
 
-oauth = OAuth(app)
-google = oauth.remote_app(
-    'google',
-    consumer_key='497561493859-2l1rqnevoccrlti4hpnll1afqmlvkct1.apps.googleusercontent.com',
-    consumer_secret='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',
-    request_token_params={
-        'scope': 'email profile openid', # Adjust the scope as needed
-    },
-    base_url='https://www.googleapis.com/oauth2/v1/',
-    request_token_url=None,
-    access_token_method='POST',
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-)
+    sno = db.Column(db.Integer, primary_key=True )
+    email = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
 
-from models import User, Registration
-from models import User, Registration
-migrate = Migrate(app, db)
+class Salt(db.Model):
+    email = db.Column(db.String(50), primary_key=True)
+    salt = db.Column(db.String(200), nullable=False)
 
-@app.route('/')
-def index():
-    return render_template('base.html')
+class Signup(db.Model):
 
-@app.route('/register', methods=['GET', 'POST'])
-def register_user():
+    email = db.Column(db.String(50), primary_key=True)
+    password = db.Column(db.String(200), nullable=False)
+    confirm_password=db.Column(db.String(200), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+
+
+class Bookic(db.Model):
+
+    sno = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(50), nullable=False)
+    phone = db.Column(db.String(10), nullable=False)
+    date_and_time = db.Column(db.DateTime, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+
+
+
+    
+@app.route("/")
+def home():
+    app.logger.info('Homepage accessed.')
+    return render_template("index.html")
+
+
+@app.route("/index2")
+def home2():
+    app.logger.info('Homepage 2 accessed.')
+    return render_template("index2.html")
+
+
+@app.route("/about")
+def about():
+    app.logger.info('About page accessed.')
+    return render_template("about.html")
+@app.route("/about1")
+def about1():
+    app.logger.info('About page 1 accessed.')
+    return render_template("about1.html")
+
+@app.route("/about2")
+def about2():
+    app.logger.info('About page 2 accessed.')
+    return render_template("about2.html")
+
+@app.route("/contact", methods=['GET', 'POST'])
+def contact():
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
         phone = request.form.get('phone')
+        Subject = request.form.get('Subject')
+        timestamp = datetime.datetime.now()
 
-        # Create a Registration instance and add it to the database
-        registration = Registration(name=name, email=email, phone=phone)
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            app.logger.error('Invalid email address entered.')
+            return "Invalid email address. Please try again."
 
-        try:
-            db.session.add(registration)
-            db.session.commit()
-            return redirect(url_for('thank_you'))  # Redirect to the thank you page
-        except Exception as e:
-            db.session.rollback()
-            print("Error:", str(e))
-            return "An error occurred while saving the data."
+        phone_regex = r'^\d{10,12}$'
+        if not re.match(phone_regex, phone):
+            error = "Phone number must be between 10 and 12 digits."
+            app.logger.error('Invalid Phone Number entered.')
+            return "Invalid Phone Number. Please try again."
 
-    # Handle GET requests or errors by rendering the registration form again
-    return render_template('registrations.html')
+        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email,timestamp=timestamp)
+        db.session.add(entry)
+        db.session.commit()
+        app.logger.info('Our team will reach out to you')
+        return "Our team will reach out to you "
+    app.logger.info("contact page accessed")
+    return render_template("contact.html")
 
-@app.route('/thank_you')
-def thank_you():
-    return render_template('thankyou.html')
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route("/contact1", methods=['GET', 'POST'])
+def contact1():
     if request.method == 'POST':
-        # Get user input (email and password)
+        name = request.form.get('name')
         email = request.form.get('email')
-        password = request.form.get('password')
+        phone = request.form.get('phone')
+        Subject = request.form.get('Subject')
+        timestamp = datetime.datetime.now()
 
-        # Authenticate the user (You should implement this logic)
-        if authenticate_user(email, password):
-            # Set a session variable to indicate the user is logged in
-            session['user_email'] = email
-            flash('Login successful!', 'success')
-            return redirect(url_for('dashboard'))  # Redirect to a dashboard page
-        else:
-            flash('Invalid email or password. Please try again.', 'error')
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            app.logger.error('Invalid email address entered.')
+            return "Invalid email address. Please try again."
 
-    return render_template('login.html')
+        phone_regex = r'^\d{10,12}$'
+        if not re.match(phone_regex, phone):
+            error = "Phone number must be between 10 and 12 digits."
+            app.logger.error('Invalid Phone Number entered.')
+            return "Invalid Phone Number. Please try again."
+        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email,timestamp=timestamp)
+        db.session.add(entry)
+        db.session.commit()
+        app.logger.info('Our team will reach out to you')
+        return "Our team will reach out to you"
+    app.logger.info("contact 1 page accessed")
+    return render_template("contact1.html")
 
-# Implement the authenticate_user function as per your needs
-def authenticate_user(email, password):
-    # Implement user authentication logic here (e.g., check credentials against a database)
-    # Return True if authentication is successful, otherwise return False
-    # Example:
-    # if email == 'user@example.com' and password == 'password':
-    #     return True
-    # else:
-    #     return False
-    pass
 
-# Define a route for the dashboard page (to be created)
-@app.route('/dashboard')
-def dashboard():
-    # Check if the user is logged in (You can use session['user_email'])
-    if 'user_email' in session:
-        return render_template('dashboard.html')
-    else:
-        flash('You must be logged in to access the dashboard.', 'error')
-        return redirect(url_for('login'))
 
-@app.route('/google_authorized')
-def google_authorized():
-    response = google.authorized_response()
+@app.route("/contact2", methods=['GET', 'POST'])
+def contact2():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        Subject = request.form.get('Subject')
+        timestamp = datetime.datetime.now()
 
-    if response is None or response.get('access_token') is None:
-        return 'Access denied: reason={} error={}'.format(
-            request.args['error_reason'],
-            request.args['error_description']
-        )
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            app.logger.error('Invalid email address entered.')
+            return "Invalid email address. Please try again."
 
-    # Fetch user information from Google
-    user_info = google.get('userinfo')
-    google_email = user_info.data['email']
-    name = user_info.data['name']
+        phone_regex = r'^\d{10,12}$'
+        if not re.match(phone_regex, phone):
+            error = "Phone number must be between 10 and 12 digits."
+            app.logger.error('Invalid Phone Number entered.')
+            return "Invalid Phone Number. Please try again."
 
-    # Check if the user already exists in the database
-    user = User.query.filter_by(google_email=google_email).first()
+        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email,timestamp=timestamp)
+        db.session.add(entry)
+        db.session.commit()
+        app.logger("Contact entry added successfully")
+        return "Our team will reach out to you"
+    app.logger.info("Our team will reach out to you")
+    return render_template("contact2.html")
 
-    if not user:
-        # User doesn't exist, create a new user record
-        user = User(google_email=google_email, name=name)
-        db.session.add(user)
+
+
+
+@app.route("/login_form", methods=['GET', 'POST'])
+def logg():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get("password")
+        timestamp = datetime.datetime.now()
+
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            app.logger.error('Invalid email address entered.')
+            return "Invalid email address. Please try again."
+        
+        user = Signup.query.filter_by(email=email).first()
+        if not user:
+            app.logger.warning('Invalid username or password entered.')
+            return "Invalid username or password"
+        hashed = bcrypt.hashpw(password.encode('utf-8'), mask.mask)
+        if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+        
+            entry = Loginn(email=email, password=hashed,timestamp=timestamp)
+            db.session.add(entry)  
+            db.session.commit()
+            salt_entry = Salt.query.filter_by(email=email).first()
+            if salt_entry:
+                salt = salt_entry.salt
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
+                user = Signup.query.filter_by(email=email, password=hashed_password).first()
+                if user:
+                    app.logger.warning('User has successfully logged in.')
+                    return render_template('index2.html', ans="Logged in successfully.")
+                else:
+                    app.logger.warning('entry not found for the given user.')
+                    return "Invalid username or password"
+    app.logger.info("login page accessed")
+    return render_template('login_form.html')
+    
+
+@app.route("/sign_up", methods=['GET', 'POST'])
+def sign_up():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        timestamp = datetime.datetime.now()
+
+        
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+          app.logger.error('Invalid email address entered.')
+          return "Invalid email address. Please try again."
+        
+        if password != confirm_password:
+            app.logger.error('Password and Confirm Password do not match. Please try again.')
+            return "Password and Confirm Password do not match. Please try again."
+        
+        salt = bcrypt.gensalt().decode('utf-8')
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
+        
+        user = Signup.query.filter_by(email=email).first()
+        if user:
+          app.logger.error('User already exists. Please log in.')
+          return "User already exists. Please log in."
+        
+        entry = Signup(email=email, password=hashed_password, confirm_password=confirm_password,timestamp=timestamp)
+        db.session.add(entry)
+        db.session.commit()
+        
+        salt_entry = Salt(email=email, salt=salt)
+        db.session.add(salt_entry)
         db.session.commit()
 
-    # Store the user's email in the session
-    session['user_email'] = google_email
-
-    # Redirect to the user-specific page or perform other actions as needed
-    return redirect(url_for('user_dashboard'))
-@google.tokengetter
-def get_oauth_token():
-    return session.get('google_token')
-@app.route('/some_protected_route')
-def some_protected_route():
-    oauth_token = session.get('oauth_token')
-    if oauth_token:
-    
-        api_response = make_authenticated_api_request(oauth_token)
-
-        # Process the API response and return a result
-        return 'API Response: {}'.format(api_response)
+        app.logger.info('User signed up successfully.')
+        return render_template('login_form.html' ,ans="User signed up successfully.")
     else:
-        # The user is not authenticated, handle accordingly
-        return 'Access denied: User is not authenticated'
+        app.logger.debug('Returning sign-up page.')
+        return render_template('sign_up.html')
 
+@app.route("/bookc", methods = ['GET','POST'])
+def bookc():
+    if(request.method=='POST'):
+        '''Add entry to the database'''
+        name = request.form.get('name')
+        email =request.form.get('email')
+        phone= request.form.get('phone')
+        date_and_time= request.form.get('date_and_time')
+        timestamp = datetime.datetime.now()
+
+        input_datetime = datetime.datetime.strptime(date_and_time, '%Y-%m-%dT%H:%M')
+        current_datetime = datetime.datetime.now()
+        if input_datetime <= current_datetime:
+            app.logger.error('Invalid date and time entered.')
+            return "Invalid date and time. Please try again."
+        
+
+
+
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            app.logger.error("Invalid email address entered.")
+            return "Invalid email address. Please try again."
+
+        phone_regex = r'^\d{10,12}$'
+        if not re.match(phone_regex, phone):
+            error = "Phone number must be between 10 and 12 digits."
+            app.logger.error('Invalid Phone Number entered.')
+            return "Invalid Phone Number. Please try again."
+        
+        existing_booking = Bookic.query.filter_by(date_and_time=date_and_time).first()
+        if existing_booking:
+            app.logger.error("The requested date and time slot is already booked.")
+            return "The requested date and time slot is already booked. Please choose another slot."
+
+        entry = Bookic(name=name,email=email, phone= phone, date_and_time=date_and_time,timestamp= timestamp)
+        db.session.add(entry)
+        db.session.commit()
+        app.logger.info('Booking made successfully.')
+        return"Booked successfully"
+    app.logger.debug('Returning booking page.')
+    return render_template("bookc.html")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True, port=8080)
