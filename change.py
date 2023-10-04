@@ -12,7 +12,6 @@ import json
 
 app = Flask(__name__)
 
- 
 appConf = {
     "OAUTH2_CLIENT_ID": "972501327114-sik46fo50ae64ld6stf6vdl3n2t6a3h0.apps.googleusercontent.com",
     "OAUTH2_CLIENT_SECRET": "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",
@@ -310,26 +309,28 @@ def bookc():
 
     app.logger.debug('Returning booking page.')
     return render_template("bookc.html")
-
 @app.route('/google-login')
 def google_login():
-    redirect_uri = url_for('google_callback', _external=True)
+    redirect_uri = "http://127.0.0.1:5000/google-callback"  # Use http here
     return oauth.google.authorize_redirect(redirect_uri)
+
 
 @app.route('/google-callback')
 def google_callback():
     token = oauth.google.authorize_access_token()
     user_info = oauth.google.parse_id_token(token)
-    
-    # You can now access user_info which contains user's Google account info
-    # You may want to store this information in your database or use it as needed
-    # Example:
+   
     # user_email = user_info['email']
     # user_name = user_info['name']
     
-    # You can also store this information in the session
+
     session['user'] = user_info
     return redirect(url_for('about'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
