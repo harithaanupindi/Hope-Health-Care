@@ -1,70 +1,55 @@
-from flask import Flask, render_template, request
+
+from flask import Flask, render_template, request, url_for, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import datetime
 import bcrypt
 import re
-import mask as mask
 import logging
 from google_auth_oauthlib.flow import Flow
-import os
-import pathlib
-from oauthlib.oauth2 import WebApplicationClient
-from flask_oauthlib.client import OAuth
-from werkzeug.urls import url_decode, url_encode
-from werkzeug.utils import url_quote, url_unquote
-from flask_sslify import SSLify
+from authlib.integrations.flask_client import OAuth
+import json
 
 app = Flask(__name__)
-app.secret_key='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'
 
+ 
+appConf = {
+    "OAUTH2_CLIENT_ID": "972501327114-sik46fo50ae64ld6stf6vdl3n2t6a3h0.apps.googleusercontent.com",
+    "OAUTH2_CLIENT_SECRET": "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",
+    "OAUTH2_META_URL": "https://accounts.google.com/.well-known/openid-configuration",
+    "FLASK_SECRET": "2778368c-dd93-4d99-8f69-118fcc23b2a7",
+    "FLASK_PORT": 8080       
+}
+app.secret_key = appConf.get("FLASK_SECRET")
 oauth = OAuth(app)
-google = oauth.remote_app(
-    'google',
-    consumer_key='972501327114-sik46fo50ae64ld6stf6vdl3n2t6a3h0.apps.googleusercontent.com',
-    consumer_secret='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',
-    request_token_params={
-        'scope': 'email profile openid', # Adjust the scope as needed
-    },
-    base_url='https://www.googleapis.com/oauth2/v1/',
-    request_token_url=None,
-    access_token_method='POST',
-    access_token_url='https://accounts.google.com/o/oauth2/token',
+oauth.register(
+    name='google',
+    client_id=appConf.get("OAUTH2_CLIENT_ID"),
+    client_secret=appConf.get("OAUTH2_CLIENT_SECRET"),
     authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    authorize_prompt_params=None,
+    authorize_response=None,
+    authorize_token_url='https://accounts.google.com/o/oauth2/token',
+    authorize_token_params=None,
+    client_kwargs={'scope': 'openid profile email https://www.googleapis.com/auth/user.birthday.read '}
 )
 
 
-logging.basicConfig(filename='record.log', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+
+logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 dbname = 'User'
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5433/User'
-#app.config['SQLALCHEMY_DATABASE_URL'] = 'postgres://username:password@localhost:5432/dbname'
+# app.config['SQLALCHEMY_DATABASE_URL'] = 'postgres://username:password@localhost:5432/dbname'
 
 db = SQLAlchemy(app)
 
-# Define a Python dictionary with the JSON data
-client_secrets_data = {
-    "web": {
-        "client_id": "972501327114-sik46fo50ae64ld6stf6vdl3n2t6a3h0.apps.googleusercontent.com",
-        "project_id": "health-care-400815",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://accounts.google.com/o/oauth2/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret": "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",
-        "redirect_uris": ["http://localhost:8080/login/callback"],
-    }
-}
-
-flow = Flow.from_client_config(
-    client_config=client_secrets_data,
-    scopes=["openid", "email", "profile"],
-    redirect_uri="http://localhost:8080/login/callback"
-)
 
 class Loginn(db.Model):
     '''
     sno,username,password,timestamp
     '''
-    sno = db.Column(db.Integer, primary_key=True )
+    sno = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(200), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
@@ -79,9 +64,8 @@ class Signup(db.Model):
     '''
     email = db.Column(db.String(50), primary_key=True)
     password = db.Column(db.String(200), nullable=False)
-    confirm_password=db.Column(db.String(200), nullable=False)
+    confirm_password = db.Column(db.String(200), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
-
 
 class Bookic(db.Model):
     '''
@@ -94,33 +78,30 @@ class Bookic(db.Model):
     date_and_time = db.Column(db.DateTime, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-
 class Slogin(db.Model):
     '''
     sno,email,password,timestamp
     '''
-    sno = db.Column(db.Integer, primary_key=True )
+    sno = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(200), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-    
 @app.route("/")
 def home():
     app.logger.info('Homepage accessed.')
     return render_template("index.html")
-
 
 @app.route("/index2")
 def home2():
     app.logger.info('Homepage 2 accessed.')
     return render_template("index2.html")
 
-
 @app.route("/about")
 def about():
     app.logger.info('About page accessed.')
-    return render_template("about.html")
+    return render_template("about.html", session=session.get("user"), pretty=json.dumps(session.get("user"), indent = 4))
+
 @app.route("/about1")
 def about1():
     app.logger.info('About page 1 accessed.')
@@ -150,11 +131,12 @@ def contact():
             app.logger.error('Invalid Phone Number entered.')
             return "Invalid Phone Number. Please try again."
 
-        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email,timestamp=timestamp)
+        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email, timestamp=timestamp)
         db.session.add(entry)
         db.session.commit()
         app.logger.info('Our team will reach out to you')
         return "Our team will reach out to you "
+
     app.logger.info("contact page accessed")
     return render_template("contact.html")
 
@@ -176,15 +158,15 @@ def contact1():
             error = "Phone number must be between 10 and 12 digits."
             app.logger.error('Invalid Phone Number entered.')
             return "Invalid Phone Number. Please try again."
-        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email,timestamp=timestamp)
+
+        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email, timestamp=timestamp)
         db.session.add(entry)
         db.session.commit()
         app.logger.info('Our team will reach out to you')
         return "Our team will reach out to you"
+
     app.logger.info("contact 1 page accessed")
     return render_template("contact1.html")
-
-
 
 @app.route("/contact2", methods=['GET', 'POST'])
 def contact2():
@@ -205,16 +187,14 @@ def contact2():
             app.logger.error('Invalid Phone Number entered.')
             return "Invalid Phone Number. Please try again."
 
-        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email,timestamp=timestamp)
+        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email, timestamp=timestamp)
         db.session.add(entry)
         db.session.commit()
-        app.logger("Contact entry added successfully")
+        app.logger.info("Contact entry added successfully")
         return "Our team will reach out to you"
+
     app.logger.info("Our team will reach out to you")
     return render_template("contact2.html")
-
-
-
 
 @app.route("/login_form", methods=['GET', 'POST'])
 def logg():
@@ -226,17 +206,19 @@ def logg():
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             app.logger.error('Invalid email address entered.')
             return "Invalid email address. Please try again."
-        
+
         user = Signup.query.filter_by(email=email).first()
         if not user:
             app.logger.warning('Invalid username or password entered.')
             return "Invalid username or password"
-        hashed = bcrypt.hashpw(password.encode('utf-8'), mask.mask)
+
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-        
-            entry = Loginn(email=email, password=hashed,timestamp=timestamp)
-            db.session.add(entry)  
+
+            entry = Loginn(email=email, password=hashed, timestamp=timestamp)
+            db.session.add(entry)
             db.session.commit()
+
             salt_entry = Salt.query.filter_by(email=email).first()
             if salt_entry:
                 salt = salt_entry.salt
@@ -246,11 +228,11 @@ def logg():
                     app.logger.warning('User has successfully logged in.')
                     return render_template('index2.html', ans="Logged in successfully.")
                 else:
-                    app.logger.warning('entry not found for the given user.')
+                    app.logger.warning('Entry not found for the given user.')
                     return "Invalid username or password"
-    app.logger.info("login page accessed")
+
+    app.logger.info("Login page accessed")
     return render_template('login_form.html')
-    
 
 @app.route("/sign_up", methods=['GET', 'POST'])
 def sign_up():
@@ -260,45 +242,44 @@ def sign_up():
         confirm_password = request.form.get("confirm_password")
         timestamp = datetime.datetime.now()
 
-        
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-          app.logger.error('Invalid email address entered.')
-          return "Invalid email address. Please try again."
-        
+            app.logger.error('Invalid email address entered.')
+            return "Invalid email address. Please try again."
+
         if password != confirm_password:
             app.logger.error('Password and Confirm Password do not match. Please try again.')
             return "Password and Confirm Password do not match. Please try again."
-        
+
         salt = bcrypt.gensalt().decode('utf-8')
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
-        
+
         user = Signup.query.filter_by(email=email).first()
         if user:
-          app.logger.error('User already exists. Please log in.')
-          return "User already exists. Please log in."
-        
-        entry = Signup(email=email, password=hashed_password, confirm_password=confirm_password,timestamp=timestamp)
+            app.logger.error('User already exists. Please log in.')
+            return "User already exists. Please log in."
+
+        entry = Signup(email=email, password=hashed_password, confirm_password=confirm_password, timestamp=timestamp)
         db.session.add(entry)
         db.session.commit()
-        
+
         salt_entry = Salt(email=email, salt=salt)
         db.session.add(salt_entry)
         db.session.commit()
 
         app.logger.info('User signed up successfully.')
-        return render_template('login_form.html' ,ans="User signed up successfully.")
+        return render_template('login_form.html', ans="User signed up successfully.")
+
     else:
         app.logger.debug('Returning sign-up page.')
         return render_template('sign_up.html')
 
-@app.route("/bookc", methods = ['GET','POST'])
+@app.route("/bookc", methods=['GET', 'POST'])
 def bookc():
-    if(request.method=='POST'):
-        '''Add entry to the database'''
+    if request.method == 'POST':
         name = request.form.get('name')
-        email =request.form.get('email')
-        phone= request.form.get('phone')
-        date_and_time= request.form.get('date_and_time')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        date_and_time = request.form.get('date_and_time')
         timestamp = datetime.datetime.now()
 
         input_datetime = datetime.datetime.strptime(date_and_time, '%Y-%m-%dT%H:%M')
@@ -306,9 +287,6 @@ def bookc():
         if input_datetime <= current_datetime:
             app.logger.error('Invalid date and time entered.')
             return "Invalid date and time. Please try again."
-        
-
-
 
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             app.logger.error("Invalid email address entered.")
@@ -316,194 +294,42 @@ def bookc():
 
         phone_regex = r'^\d{10,12}$'
         if not re.match(phone_regex, phone):
-            error = "Phone number must be between 10 and 12 digits."
             app.logger.error('Invalid Phone Number entered.')
             return "Invalid Phone Number. Please try again."
-        
+
         existing_booking = Bookic.query.filter_by(date_and_time=date_and_time).first()
         if existing_booking:
             app.logger.error("The requested date and time slot is already booked.")
             return "The requested date and time slot is already booked. Please choose another slot."
 
-        entry = Bookic(name=name,email=email, phone= phone, date_and_time=date_and_time,timestamp= timestamp)
+        entry = Bookic(name=name, email=email, phone=phone, date_and_time=date_and_time, timestamp=timestamp)
         db.session.add(entry)
         db.session.commit()
         app.logger.info('Booking made successfully.')
-        return"Booked successfully"
+        return "Booked successfully"
+
     app.logger.debug('Returning booking page.')
     return render_template("bookc.html")
 
-@app.route("/bookv", methods = ['GET','POST'])
-def bookv():
-    if(request.method=='POST'):
-        '''Add entry to the database'''
-        name = request.form.get('name')
-        email =request.form.get('email')
-        phone= request.form.get('phone')
-        date_and_time= request.form.get('date_and_time')
-        timestamp = datetime.datetime.now()
-
-        input_datetime = datetime.datetime.strptime(date_and_time, '%Y-%m-%dT%H:%M')
-        current_datetime = datetime.datetime.now()
-        if input_datetime <= current_datetime:
-            app.logger.error('Invalid date and time entered.')
-            return "Invalid date and time. Please try again."
-        
-
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            app.logger.error("Invalid email address entered.")
-            return "Invalid email address. Please try again."
-
-        phone_regex = r'^\d{10,12}$'
-        if not re.match(phone_regex, phone):
-            error = "Phone number must be between 10 and 12 digits."
-            app.logger.error('Invalid Phone Number entered.')
-            return "Invalid Phone Number. Please try again."
-        
-        existing_booking = Bookiv.query.filter_by(date_and_time=date_and_time).first()
-        if existing_booking:
-            app.logger.error("The requested date and time slot is already booked.")
-            return "The requested date and time slot is already booked. Please choose another slot."
-
-        entry = Bookiv(name=name,email=email, phone= phone, date_and_time=date_and_time ,timestamp= timestamp)
-        db.session.add(entry)
-        db.session.commit()
-        app.logger.info('Booking made successfully.')
-        return"Booked successfully"
-    app.logger.debug('Returning booking page.')
-    return render_template("bookv.html")
-
-@app.route("/bookb", methods = ['GET','POST'])
-def bookb():
-    if(request.method=='POST'):
-        '''Add entry to the database'''
-        name = request.form.get('name')
-        email =request.form.get('email')
-        phone= request.form.get('phone')
-        date_and_time= request.form.get('date_and_time')
-        timestamp = datetime.datetime.now()
-
-        input_datetime = datetime.datetime.strptime(date_and_time, '%Y-%m-%dT%H:%M')
-        current_datetime = datetime.datetime.now()
-        if input_datetime <= current_datetime:
-            app.logger.error('Invalid date and time entered.')
-            return "Invalid date and time. Please try again."
-        
-
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            app.logger.error("Invalid email address entered.")
-            return "Invalid email address. Please try again."
-
-        phone_regex = r'^\d{10,12}$'
-        if not re.match(phone_regex, phone):
-            error = "Phone number must be between 10 and 12 digits."
-            app.logger.error('Invalid Phone Number entered.')
-            return "Invalid Phone Number. Please try again."
-        
-        existing_booking = Bookib.query.filter_by(date_and_time=date_and_time).first()
-        if existing_booking:
-            app.logger.error("The requested date and time slot is already booked.")
-            return "The requested date and time slot is already booked. Please choose another slot."
-
-        entry = Bookib(name=name,email=email, phone= phone, date_and_time=date_and_time ,timestamp= timestamp)
-        db.session.add(entry)
-        db.session.commit()
-        app.logger.info('Booking made successfully.')
-        return"Booked successfully"
-    app.logger.debug('Returning booking page.')
-    return render_template("bookb.html")
-
-@app.route("/slogin", methods=['GET', 'POST'])
-def slogg():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get("password")
-        timestamp = datetime.datetime.now()
-
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            app.logger.error('Invalid email address entered.')
-            return "Invalid email address. Please try again."
-        
-        user = Signup.query.filter_by(email=email).first()
-        if not user:
-            app.logger.warning('Invalid username or password entered.')
-            return "Invalid username or password"
-        hashed = bcrypt.hashpw(password.encode('utf-8'), mask.mask)
-        if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-        
-            entry = slogin(email=email, password=hashed,timestamp=timestamp)
-            db.session.add(entry)  
-            db.session.commit()
-            salt_entry = Salt.query.filter_by(email=email).first()
-            if salt_entry:
-                salt = salt_entry.salt
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
-                user = Signup.query.filter_by(email=email, password=hashed_password).first()
-                if user:
-                    app.logger.warning('User has successfully logged in.')
-                    return render_template('index2.html', ans="Logged in successfully.")
-                else:
-                    app.logger.warning('Salt entry not found for the given user.')
-                    return "Invalid username or password"
-    app.logger.info("login page accessed")
-    return render_template('slogin.html')
-@app.route("/login/callback")
-def login_callback():
-    flow = Flow.from_client_config(
-    client_config=client_secrets_data,
-    scopes=["openid", "email", "profile"],
-    redirect_uri="https://localhost:8080/login/callback"
-)
-
-
-    flow.fetch_token(authorization_response=request.url)
-    userinfo = flow.credentials.id_token
-    # Store or use userinfo as needed
-    return "Logged in successfully as: {}".format(userinfo['email'])
-@app.route('/google_login')
+@app.route('/google-login')
 def google_login():
-    return google.authorize(callback=url_for('google_authorized', _external=True))
+    redirect_uri = url_for('google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
 
-@app.route('/google_authorized')
-def google_authorized():
-    response = google.authorized_response()
-
-    if response is None or response.get('access_token') is None:
-        return 'Access denied: reason={} error={}'.format(
-            request.args['error_reason'],
-            request.args['error_description']
-        )
-
-    # Store the user's Google OAuth2 credentials in the session
-    session['google_token'] = (response['access_token'], '')
-
-    # Fetch user information from Google
-    user_info = google.get('userinfo')
+@app.route('/google-callback')
+def google_callback():
+    token = oauth.google.authorize_access_token()
+    user_info = oauth.google.parse_id_token(token)
     
-    # Store user information in the session or database as needed
-    session['user_info'] = user_info.data
+    # You can now access user_info which contains user's Google account info
+    # You may want to store this information in your database or use it as needed
+    # Example:
+    # user_email = user_info['email']
+    # user_name = user_info['name']
     
-    # Redirect or render a success page
-    return 'Logged in as: ' + user_info.data['email']
-
-
-@google.tokengetter
-def get_oauth_token():
-    return session.get('google_token')
-@app.route('/some_protected_route')
-def some_protected_route():
-    oauth_token = session.get('oauth_token')
-    if oauth_token:
-    
-        api_response = make_authenticated_api_request(oauth_token)
-
-        # Process the API response and return a result
-        return 'API Response: {}'.format(api_response)
-    else:
-        # The user is not authenticated, handle accordingly
-        return 'Access denied: User is not authenticated'
+    # You can also store this information in the session
+    session['user'] = user_info
+    return redirect(url_for('about'))
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
-

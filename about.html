@@ -240,8 +240,8 @@
             <!-- <li><a href="#web">Home</a></li> -->
             <li><a href="/contact">Contact Us</a></li>
             <!-- <li><a href="/about">About Us</a></li> -->
-            <li><a href="/login_form">Sign up</a></li>
-            <li><a href="/sign_up">Sign in</a></li>
+            <li><a href="/login_form">Sign in</a></li>
+            <li><a href="/sign_up">Sign up</a></li>
             <!-- <l1><button class="lg_btn"><a href="/login_form">login</a></button></l1>
             <li><button class="bg_btn"><a href="/sign_up">sign up </a></button></li> -->  
         </ul>
@@ -318,5 +318,12 @@
             </div>
         </div>
     </div>
+</body>
+<body>
+    {% if session %}
+    <div> <pre> {{pretty}}</pre></div>
+    {% else %}
+    <p><a href="{{url_for('google_login')}}">Login with Google</a></p>
+    {% endif %}
 </body>
 </html>

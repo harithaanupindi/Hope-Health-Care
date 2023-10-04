@@ -283,7 +283,6 @@ def bookc():
     return render_template("bookc.html")
 
 if __name__ == '__main__':
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     with app.app_context():
         db.create_all()
     app.run(debug=True, port=8080)
