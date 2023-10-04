@@ -1,152 +1,17 @@
-import LoginButton from "./components/login";
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Form</title>
-    <style>
-        html {
-            height: 100%;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
-            background-image: url("static/email.jpg");
-            background-repeat: no-repeat;
-            background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .login-box {
-            width: 400px;
-            padding: 40px;
-            background: rgba(0, 0, 0, 0.5);
-            box-sizing: border-box;
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            color: #fff;
-            text-align: center;
-        }
-
-        .login-box h2 {
-            margin: 0 0 30px;
-            padding: 0;
-            font-size: 28px;
-        }
-
-        .user-box {
-            position: relative;
-            margin-bottom: 30px;
-        }
-
-        .user-box input {
-            width: 100%;
-            padding: 10px 0;
-            font-size: 16px;
-            color: #fff;
-            margin-bottom: 5px;
-            border: none;
-            border-bottom: 1px solid #fff;
-            outline: none;
-            background: transparent;
-        }
-
-        .user-box label {
-            position: absolute;
-            top: 0;
-            left: 0;
-            padding: 10px 0;
-            font-size: 16px;
-            color: #fff;
-            pointer-events: none;
-            transition: .5s;
-        }
-
-        .user-box input:focus ~ label,
-        .user-box input:valid ~ label {
-            top: -20px;
-            left: 0;
-            color: #03e9f4;
-            font-size: 12px;
-        }
-
-        .login-box form a {
-            display: block;
-            margin-top: 20px;
-            text-decoration: none;
-            color: #03e9f4;
-            font-size: 16px;
-            text-transform: uppercase;
-            transition: .5s;
-        }
-
-        .login-box form a:hover {
-            color: #fff;
-        }
-
-        .login-box form button.login {
-            width: 100%;
-            padding: 10px 0;
-            background-color: #03e9f4;
-            border: none;
-            color: #000;
-            font-size: 16px;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .login-box form button.login:hover {
-            background-color: #fff;
-            color: #000;
-        }
-
-        .login-box form button.cancelbtn {
-            width: 100%;
-            padding: 10px 0;
-            background-color: transparent;
-            border: 1px solid #fff;
-            color: #fff;
-            font-size: 16px;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        .login-box form button.cancelbtn:hover {
-            background-color: #fff;
-            color: #000;
-        }
-
-    </style>
+    <title>Login</title>
 </head>
 <body>
-<div class="login-box">
-    <h2>Sign in</h2>
-    <form action="/login_form" method="POST">
-        <div class="user-box">
-            <input type="email" name="email" class="form-control" required
-                   data-validation-required-message="Please enter your user email">
-            <label>Email</label>
-        </div>
-        <div class="user-box">
-            <input type="password" class="form-control" id="password" name="password" required
-                   data-validation-required-message="Please enter your password">
-            <label>Password</label>
-        </div>
-        <button type="submit" class="login" id="sendMessageButton">Login</button>
-        <a href="/">Back</a>
+    <h1>Login with Gmail</h1>
+    <form method="POST" action="/login_with_google">
+        <label for="email">Gmail Email Address:</label>
+        <input type="email" id="email" name="email" required>
+        <br>
+        <button type="submit">Login with Gmail</button>
     </form>
-</div>
-<script src="https://apis.google.com/js/platform.js" async defer></script>
 </body>
 </html>
