@@ -6,6 +6,7 @@ import datetime
 import bcrypt
 import re
 import logging
+import requests
 from google_auth_oauthlib.flow import Flow
 from authlib.integrations.flask_client import OAuth
 import json
@@ -17,7 +18,7 @@ appConf = {
     "OAUTH2_CLIENT_SECRET": "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",
     "OAUTH2_META_URL": "https://accounts.google.com/.well-known/openid-configuration",
     "FLASK_SECRET": "2778368c-dd93-4d99-8f69-118fcc23b2a7",
-    "FLASK_PORT": 8080       
+    "FLASK_PORT": 5000      
 }
 app.secret_key = appConf.get("FLASK_SECRET")
 oauth = OAuth(app)
@@ -31,7 +32,8 @@ oauth.register(
     authorize_response=None,
     authorize_token_url='https://accounts.google.com/o/oauth2/token',
     authorize_token_params=None,
-    client_kwargs={'scope': 'openid profile email https://www.googleapis.com/auth/user.birthday.read '}
+    client_kwargs={'scope': 'openid profile email https://www.googleapis.com/auth/user.birthday.read ', 
+                   'redirect_uri': 'http://127.0.0.1:5000/auth'}
 )
 
 
@@ -77,17 +79,8 @@ class Bookic(db.Model):
     date_and_time = db.Column(db.DateTime, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-class Slogin(db.Model):
-    '''
-    sno,email,password,timestamp
-    '''
-    sno = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(50), nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
-
 @app.route("/")
-def home():
+def homee():
     app.logger.info('Homepage accessed.')
     return render_template("index.html")
 
@@ -309,27 +302,31 @@ def bookc():
 
     app.logger.debug('Returning booking page.')
     return render_template("bookc.html")
-@app.route('/google-login')
-def google_login():
-    redirect_uri = "http://127.0.0.1:5000/google-callback"  # Use http here
+@app.route('/login')
+def login():
+    redirect_uri = url_for('auth', _external=True)  # Make sure this points to your 'auth' route
     return oauth.google.authorize_redirect(redirect_uri)
 
 
-@app.route('/google-callback')
-def google_callback():
+@app.route('/auth')
+def auth():
     token = oauth.google.authorize_access_token()
     user_info = oauth.google.parse_id_token(token)
-   
-    # user_email = user_info['email']
-    # user_name = user_info['name']
-    
-
     session['user'] = user_info
-    return redirect(url_for('about'))
+    return redirect(url_for('index'))
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('index'))
 
+@app.route('/')
+def home():
+    user = session.get('user')
+    if user:
+        return f"Hello, {user['name']}! <a href='/logout'>Logout</a>"
+    else:
+        return "You are not logged in. <a href='/login'>Login with Google</a>"
 
 
 if __name__ == '__main__':
