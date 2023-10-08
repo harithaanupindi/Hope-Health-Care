@@ -8,20 +8,36 @@ import re
 import logging
 import json
 import secrets
+from flask import Flask, redirect, request, session, url_for
+import rauth
+import requests
+from flask_dance.contrib.github import make_github_blueprint, github
+
 app = Flask(__name__)
 
-appConf = {
-    "OAUTH2_CLIENT_ID": "972501327114-sik46fo50ae64ld6stf6vdl3n2t6a3h0.apps.googleusercontent.com",
-    "OAUTH2_CLIENT_SECRET": "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",
-    "OAUTH2_META_URL": "https://accounts.google.com/.well-known/openid-configuration",
-    "FLASK_PORT": 5000      
-}
+#GOOGLE_CLIENT_ID = "417190798578-a96eupvmdkcpjqdpnbrelp2gl2ig2ih3.apps.googleusercontent.com"
+#GOOGLE_CLIENT_SECRET = "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"
+#REDIRECT_URI = "http://127.0.0.1:5000/auth"
+
+github_blueprint = make_github_blueprint(client_id='ab5f7b0fd7e0c21f9cc8',
+                                         client_secret='6e46cb0a4da43f0c79812695b6f86e3e1ead4d08')
+
+app.register_blueprint(github_blueprint, url_prefix='/github_login')
+
 app.secret_key = secrets.token_hex(16)
 
+#google_session = rauth.OAuth2Service(
+    #client_id='417190798578-a96eupvmdkcpjqdpnbrelp2gl2ig2ih3.apps.googleusercontent.com',
+    #client_secret='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',
+    #name="google",
+    #authorize_url="https://accounts.google.com/o/oauth2/auth",
+    #ccess_token_url="https://accounts.google.com/o/oauth2/token",
+    #base_url="https://www.googleapis.com/oauth2/v1/",
+#)
 
 logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 dbname = 'User'
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5433/User'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5432/User'
 # app.config['SQLALCHEMY_DATABASE_URL'] = 'postgres://username:password@localhost:5432/dbname'
 
 db = SQLAlchemy(app)
@@ -60,10 +76,10 @@ class Bookic(db.Model):
     date_and_time = db.Column(db.DateTime, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-@app.route("/")
-def homee():
-    app.logger.info('Homepage accessed.')
-    return render_template("index.html")
+# @app.route("/")
+#def homee():
+ #   app.logger.info('Homepage accessed.')
+  #  return render_template("index.html")
 
 @app.route("/index2")
 def home2():
@@ -75,10 +91,6 @@ def about():
     app.logger.info('About page accessed.')
     return render_template("about.html", session=session.get("user"), pretty=json.dumps(session.get("user"), indent = 4))
 
-@app.route("/about1")
-def about1():
-    app.logger.info('About page 1 accessed.')
-    return render_template("about1.html")
 
 @app.route("/about2")
 def about2():
@@ -283,6 +295,24 @@ def bookc():
 
     app.logger.debug('Returning booking page.')
     return render_template("bookc.html")
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/login')
+def github_login():
+
+    if not github.authorized:
+        return redirect(url_for('github.login'))
+    else:
+        account_info = github.get('/user')
+        if account_info.ok:
+            account_info_json = account_info.json()
+            return '<h1>Your Github name is {}'.format(account_info_json['login'])
+
+    return '<h1>Request failed!</h1>'
+
 
 if __name__ == '__main__':
     app.run(debug=True)
