@@ -35,7 +35,7 @@ app.secret_key = secrets.token_hex(16)
 
 logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 dbname = 'User'
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5432/User'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5432/User2'
 # app.config['SQLALCHEMY_DATABASE_URL'] = 'postgres://username:password@localhost:5432/dbname'
 
 db = SQLAlchemy(app)
@@ -73,6 +73,7 @@ class Bookic(db.Model):
     email = db.Column(db.String(50), nullable=False)
     phone = db.Column(db.String(10), nullable=False)
     date_and_time = db.Column(db.DateTime, nullable=False)
+    doctor=db.Column(db.String(80), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
 # @app.route("/")
@@ -274,6 +275,7 @@ def bookc():
         email = request.form.get('email')
         phone = request.form.get('phone')
         date_and_time = request.form.get('date_and_time')
+        doctor=request.form.get('doctor')
         timestamp = datetime.datetime.now()
 
         input_datetime = datetime.datetime.strptime(date_and_time, '%Y-%m-%dT%H:%M')
@@ -296,7 +298,7 @@ def bookc():
             app.logger.error("The requested date and time slot is already booked.")
             return "The requested date and time slot is already booked. Please choose another slot."
 
-        entry = Bookic(name=name, email=email, phone=phone, date_and_time=date_and_time, timestamp=timestamp)
+        entry = Bookic(name=name, email=email, phone=phone, date_and_time=date_and_time, doctor=doctor, timestamp=timestamp)
         db.session.add(entry)
         db.session.commit()
         app.logger.info('Booking made successfully.')
