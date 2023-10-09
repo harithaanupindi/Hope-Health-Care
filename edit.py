@@ -11,7 +11,8 @@ import secrets
 from flask import Flask, redirect, request, session, url_for
 import rauth
 import requests
-from flask_dance.contrib.github import make_github_blueprint, github
+from rauth import OAuth2Service
+from rauth.service import OAuth2Service
 
 app = Flask(__name__)
 
@@ -19,10 +20,19 @@ app = Flask(__name__)
 #GOOGLE_CLIENT_SECRET = "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"
 #REDIRECT_URI = "http://127.0.0.1:5000/auth"
 
-github_blueprint = make_github_blueprint(client_id='ab5f7b0fd7e0c21f9cc8',
-                                         client_secret='6e46cb0a4da43f0c79812695b6f86e3e1ead4d08')
+app.config['GITHUB_CLIENT_ID'] = 'ab5f7b0fd7e0c21f9cc8'
+app.config['GITHUB_CLIENT_SECRET'] = 'cb4e3a5d36af588936c1aec759354dd11b0dcd79'
+REDIRECT_URI = 'http://127.0.0.1:5000/github_callback'
 
-app.register_blueprint(github_blueprint, url_prefix='/github_login')
+
+github_oauth = OAuth2Service(
+    client_id='ab5f7b0fd7e0c21f9cc8',
+    client_secret='cb4e3a5d36af588936c1aec759354dd11b0dcd79',
+    name='github',
+    authorize_url='https://github.com/login/oauth/authorize',
+    access_token_url='https://github.com/login/oauth/access_token',
+    base_url='https://api.github.com/',
+)
 
 app.secret_key = secrets.token_hex(16)
 
@@ -300,19 +310,58 @@ def bookc():
 def home():
     return render_template('index.html')
 
-@app.route('/login')
-def github_login():
+@app.route('/github_login')
+def login():
+    redirect_uri = url_for('github_callback', _external=True)
+    params = {
+        'redirect_uri': redirect_uri,
+        'scope': 'user',  # Customize the scope as needed
+    }
+    auth_url = github_oauth.get_authorize_url(**params)
+    return redirect(auth_url)
 
-    if not github.authorized:
-        return redirect(url_for('github.login'))
+@app.route('/github_callback')
+def github_callback():
+    code = request.args.get('code')
+    if code:
+        # Use the code to obtain an access token from GitHub
+        data = {
+            'code': code,
+            'redirect_uri': REDIRECT_URI,
+            'client_id': 'ab5f7b0fd7e0c21f9cc8',
+            'client_secret': 'cb4e3a5d36af588936c1aec759354dd11b0dcd79',
+        }
+        response = requests.post(github_oauth.access_token_url, data=data, headers={'Accept': 'application/json'})
+        
+        if response.status_code == 200:
+            access_token = response.json()['access_token']
+
+            # Use the access token to fetch user data from GitHub
+            user_data_response = requests.get('https://api.github.com/user', headers={'Authorization': f'Bearer {access_token}'})
+            
+            if user_data_response.status_code == 200:
+                user_data = user_data_response.json()
+                
+                # Store user data in the session (customize as needed)
+                session['github_user_data'] = user_data
+                
+                # Redirect to a page where you can display GitHub account information
+                return redirect('/profile')
+            else:
+                return 'Failed to fetch user data from GitHub'
+        else:
+            return 'Failed to obtain access token from GitHub'
     else:
-        account_info = github.get('/user')
-        if account_info.ok:
-            account_info_json = account_info.json()
-            return '<h1>Your Github name is {}'.format(account_info_json['login'])
+        return 'GitHub authentication failed.'
 
-    return '<h1>Request failed!</h1>'
-
+@app.route('/profile')
+def profile():
+    github_user_data = session.get('github_user_data')
+    if github_user_data:
+        # Display user information here
+        return f'GitHub User ID: {github_user_data["id"]}<br>GitHub Username: {github_user_data["login"]}'
+    else:
+        return 'User not authenticated.'
 
 if __name__ == '__main__':
     app.run(debug=True)
