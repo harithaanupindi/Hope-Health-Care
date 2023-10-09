@@ -1,24 +1,19 @@
-
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_migrate import Migrate
 import datetime
 import bcrypt
 import re
 import logging
 import json
 import secrets
-from flask import Flask, redirect, request, session, url_for
 import rauth
 import requests
 from rauth import OAuth2Service
 from rauth.service import OAuth2Service
 
 app = Flask(__name__)
-
-#GOOGLE_CLIENT_ID = "417190798578-a96eupvmdkcpjqdpnbrelp2gl2ig2ih3.apps.googleusercontent.com"
-#GOOGLE_CLIENT_SECRET = "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"
-#REDIRECT_URI = "http://127.0.0.1:5000/auth"
 
 app.config['GITHUB_CLIENT_ID'] = 'ab5f7b0fd7e0c21f9cc8'
 app.config['GITHUB_CLIENT_SECRET'] = 'cb4e3a5d36af588936c1aec759354dd11b0dcd79'
@@ -36,14 +31,7 @@ github_oauth = OAuth2Service(
 
 app.secret_key = secrets.token_hex(16)
 
-#google_session = rauth.OAuth2Service(
-    #client_id='417190798578-a96eupvmdkcpjqdpnbrelp2gl2ig2ih3.apps.googleusercontent.com',
-    #client_secret='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',
-    #name="google",
-    #authorize_url="https://accounts.google.com/o/oauth2/auth",
-    #ccess_token_url="https://accounts.google.com/o/oauth2/token",
-    #base_url="https://www.googleapis.com/oauth2/v1/",
-#)
+
 
 logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 dbname = 'User'
@@ -51,15 +39,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@local
 # app.config['SQLALCHEMY_DATABASE_URL'] = 'postgres://username:password@localhost:5432/dbname'
 
 db = SQLAlchemy(app)
-
+migrate = Migrate(app, db)
 
 class Loginn(db.Model):
     '''
     sno,username,password,timestamp
     '''
     sno = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(200), nullable=False)
+    github_username = db.Column(db.String(100))
     timestamp = db.Column(db.DateTime, nullable=False)
 
 class Salt(db.Model):
@@ -94,7 +83,17 @@ class Bookic(db.Model):
 @app.route("/index2")
 def home2():
     app.logger.info('Homepage 2 accessed.')
-    return render_template("index2.html")
+
+    # Get the GitHub user data from the session
+    github_user_data = session.get('github_user_data')
+
+    # Check if the user data is available
+    if github_user_data:
+        # Pass the user data to the template
+        return render_template("index2.html", github_user_data=github_user_data)
+    else:
+        return "User not authenticated."
+
 
 @app.route("/about")
 def about():
@@ -346,7 +345,7 @@ def github_callback():
                 session['github_user_data'] = user_data
                 
                 # Redirect to a page where you can display GitHub account information
-                return redirect('/profile')
+                return redirect('/index2')
             else:
                 return 'Failed to fetch user data from GitHub'
         else:
@@ -364,4 +363,6 @@ def profile():
         return 'User not authenticated.'
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    with app.app_context():
+        db.create_all()
+        app.run(debug=True)
