@@ -48,7 +48,7 @@ class Loginn(db.Model):
     sno = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(200), nullable=False)
-    github_username = db.Column(db.String(100))
+    github_username = db.Column(db.String(100), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
 class Salt(db.Model):
@@ -210,7 +210,7 @@ def logg():
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
 
-            entry = Loginn(email=email, password=hashed, timestamp=timestamp)
+            entry = Loginn(email=email, password=hashed, github_username= github_username, timestamp=timestamp)
             db.session.add(entry)
             db.session.commit()
 
@@ -342,9 +342,20 @@ def github_callback():
             
             if user_data_response.status_code == 200:
                 user_data = user_data_response.json()
-                
+
                 # Store user data in the session (customize as needed)
                 session['github_user_data'] = user_data
+
+                # Store GitHub login credentials in the Loginn table
+                email = user_data['email']  # You should handle the case where 'email' is None
+                password = secrets.token_hex(16)  # Generate a random password for GitHub logins
+                github_username = user_data['login']
+                timestamp = datetime.datetime.now()
+
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                entry = Loginn(email=email, password=hashed_password, github_username=github_username, timestamp=timestamp)
+                db.session.add(entry)
+                db.session.commit()
                 
                 # Redirect to a page where you can display GitHub account information
                 return redirect('/index2')
@@ -355,6 +366,7 @@ def github_callback():
     else:
         return 'GitHub authentication failed.'
 
+
 @app.route('/profile')
 def profile():
     github_user_data = session.get('github_user_data')
@@ -363,6 +375,14 @@ def profile():
         return f'GitHub User ID: {github_user_data["id"]}<br>GitHub Username: {github_user_data["login"]}'
     else:
         return 'User not authenticated.'
+    
+@app.route('/logout')
+def logout():
+    # Clear the session data
+
+    # Redirect to the login page or any other page after logout
+    return render_template('login_form.html')  # Change '/login_form' to the actual login page URL
+
 
 if __name__ == '__main__':
     with app.app_context():
