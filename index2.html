@@ -172,12 +172,14 @@
     </style>
 </head>
 
-<body>
-    <!-- A hidden input field to store the user's email -->
-    <input type="hidden" id="user-email" value="user@example.com">
+    <body>
+        <!-- A hidden input field to store the user's email -->
+        <input type="hidden" id="user-email" value="user@github.com">
 
     <div id="welcome-user">Welcome User</div>
-
+    <div id="welcome-user">
+        Welcome {{ session['github_user_data']['login'] }}
+    </div>
     <nav class="navbar background">
         <ul class="nav-list">
             <li><a href="/contact">About Us</a></li>
@@ -191,6 +193,16 @@
         <h1>Welcome to Hope Health Care</h1>
         <p>Book a visit with us</p>
     </header>
+    <div id="user-details" style="text-align: center;">
+        <!-- Display GitHub user data if available -->
+        {% if github_user_data %}
+            <h2>Welcome, {{ github_user_data.login }}!</h2>
+            <p>Your GitHub User ID is: {{ github_user_data.id }}</p>
+            <!-- You can display more user details here as needed -->
+        {% else %}
+            <p>You are not authenticated with GitHub.</p>
+        {% endif %}
+    </div>
     <div class="container">
         <h1>General Physicians</h1>
         <p>Consult our general physicians for comprehensive health assessments and primary care services.</p>
