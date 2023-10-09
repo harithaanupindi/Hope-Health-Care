@@ -177,9 +177,11 @@
         <input type="hidden" id="user-email" value="user@github.com">
 
     <div id="welcome-user">Welcome User</div>
-    <div id="welcome-user">
-        Welcome {{ session['github_user_data']['login'] }}
-    </div>
+    <!-- Add this button to your template -->
+
+    <a href="/login_form" class="btn-sm">Log Out</a>
+    
+
     <nav class="navbar background">
         <ul class="nav-list">
             <li><a href="/contact">About Us</a></li>
@@ -241,14 +243,6 @@
     <footer class="footer">
         &copy; 2023 Hope Health Care. All rights reserved.
     </footer>
-
-    <script>
-        // Function to display the user's email when the "Welcome User" message is clicked
-        document.getElementById("welcome-user").addEventListener("click", function () {
-            const userEmail = document.getElementById("user-email").value;
-            alert("Logged in as: " + userEmail);
-        });
-    </script>
 </body>
 
 </html>
