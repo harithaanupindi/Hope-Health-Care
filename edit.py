@@ -35,7 +35,7 @@ app.secret_key = secrets.token_hex(16)
 
 logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 dbname = 'User'
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5432/User2'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:Hillgrange@localhost:5433/User2'
 # app.config['SQLALCHEMY_DATABASE_URL'] = 'postgres://username:password@localhost:5432/dbname'
 
 db = SQLAlchemy(app)
@@ -48,7 +48,7 @@ class Loginn(db.Model):
     sno = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(200), nullable=False)
-    github_username = db.Column(db.String(100), nullable=False)
+    github_username = db.Column(db.String(100))
     timestamp = db.Column(db.DateTime, nullable=False)
 
 class Salt(db.Model):
@@ -191,7 +191,7 @@ def contact2():
     app.logger.info("Our team will reach out to you")
     return render_template("contact2.html")
 
-@app.route("/login_form", methods=['GET', 'POST'])
+@app.route('/login_form', methods=['GET', 'POST'])
 def logg():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -209,25 +209,27 @@ def logg():
 
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-
-            entry = Loginn(email=email, password=hashed, github_username= github_username, timestamp=timestamp)
-            db.session.add(entry)
-            db.session.commit()
-
-            salt_entry = Salt.query.filter_by(email=email).first()
-            if salt_entry:
-                salt = salt_entry.salt
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt.encode('utf-8')).decode('utf-8')
-                user = Signup.query.filter_by(email=email, password=hashed_password).first()
-                if user:
-                    app.logger.warning('User has successfully logged in.')
-                    return render_template('index2.html', ans="Logged in successfully.")
-                else:
-                    app.logger.warning('Entry not found for the given user.')
-                    return "Invalid username or password"
+            # Check if the user has a GitHub login associated with their email
+            github_login = Loginn.query.filter_by(email=email).first()
+            
+            if github_login:
+                # The user has logged in with GitHub
+                app.logger.warning('User has successfully logged in with GitHub.')
+                return render_template('index2.html', ans="Logged in successfully.")
+            else:
+                # The user has logged in traditionally
+                entry = Loginn(email=email, password=hashed, github_username='', timestamp=timestamp)
+                db.session.add(entry)
+                db.session.commit()
+                app.logger.warning('User has successfully logged in with traditional login.')
+                return render_template('index2.html', ans="Logged in successfully.")
+        else:
+            app.logger.warning('Entry not found for the given user.')
+            return "Invalid username or password"
 
     app.logger.info("Login page accessed")
     return render_template('login_form.html')
+
 
 @app.route("/sign_up", methods=['GET', 'POST'])
 def sign_up():
