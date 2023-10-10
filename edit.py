@@ -76,10 +76,6 @@ class Bookic(db.Model):
     doctor=db.Column(db.String(80), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
 
-# @app.route("/")
-#def homee():
- #   app.logger.info('Homepage accessed.')
-  #  return render_template("index.html")
 
 @app.route("/index2")
 def home2():
@@ -109,29 +105,6 @@ def about2():
 
 @app.route("/contact", methods=['GET', 'POST'])
 def contact():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
-        Subject = request.form.get('Subject')
-        timestamp = datetime.datetime.now()
-
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            app.logger.error('Invalid email address entered.')
-            return "Invalid email address. Please try again."
-
-        phone_regex = r'^\d{10,12}$'
-        if not re.match(phone_regex, phone):
-            error = "Phone number must be between 10 and 12 digits."
-            app.logger.error('Invalid Phone Number entered.')
-            return "Invalid Phone Number. Please try again."
-
-        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email, timestamp=timestamp)
-        db.session.add(entry)
-        db.session.commit()
-        app.logger.info('Our team will reach out to you')
-        return "Our team will reach out to you "
-
     app.logger.info("contact page accessed")
     return render_template("contact.html")
 
