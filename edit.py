@@ -108,62 +108,6 @@ def contact():
     app.logger.info("contact page accessed")
     return render_template("contact.html")
 
-@app.route("/contact1", methods=['GET', 'POST'])
-def contact1():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
-        Subject = request.form.get('Subject')
-        timestamp = datetime.datetime.now()
-
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            app.logger.error('Invalid email address entered.')
-            return "Invalid email address. Please try again."
-
-        phone_regex = r'^\d{10,12}$'
-        if not re.match(phone_regex, phone):
-            error = "Phone number must be between 10 and 12 digits."
-            app.logger.error('Invalid Phone Number entered.')
-            return "Invalid Phone Number. Please try again."
-
-        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email, timestamp=timestamp)
-        db.session.add(entry)
-        db.session.commit()
-        app.logger.info('Our team will reach out to you')
-        return "Our team will reach out to you"
-
-    app.logger.info("contact 1 page accessed")
-    return render_template("contact1.html")
-
-@app.route("/contact2", methods=['GET', 'POST'])
-def contact2():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
-        Subject = request.form.get('Subject')
-        timestamp = datetime.datetime.now()
-
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            app.logger.error('Invalid email address entered.')
-            return "Invalid email address. Please try again."
-
-        phone_regex = r'^\d{10,12}$'
-        if not re.match(phone_regex, phone):
-            error = "Phone number must be between 10 and 12 digits."
-            app.logger.error('Invalid Phone Number entered.')
-            return "Invalid Phone Number. Please try again."
-
-        entry = Contacts(name=name, phone_num=phone, Subject=Subject, email=email, timestamp=timestamp)
-        db.session.add(entry)
-        db.session.commit()
-        app.logger.info("Contact entry added successfully")
-        return "Our team will reach out to you"
-
-    app.logger.info("Our team will reach out to you")
-    return render_template("contact2.html")
-
 @app.route('/login_form', methods=['GET', 'POST'])
 def logg():
     if request.method == 'POST':
