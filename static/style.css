@@ -1,0 +1,228 @@
+/* Reset some default styles */
+body, h1, h2, p, button, ul, li, a {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  list-style: none;
+  text-decoration: none;
+}
+
+/* Set a background color for the body */
+body {
+  background-color: #f8f8f8;
+  margin: 0; /* Remove default margin */
+}
+
+/* Center the header content horizontally and vertically */
+.header {
+  background-image: url('header-bg.jpg');
+  background-size: cover;
+  text-align: center;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Set header height to full viewport height */
+}
+
+.header h1 {
+  color: black;
+  font-size: 36px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Style a navigation bar */
+.navbar {
+  background-color: #ff4747;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.nav-list {
+  display: flex;
+}
+
+.nav-item {
+  margin-left: 20px;
+}
+
+.nav-item:first-child {
+  margin-left: 0;
+}
+
+.nav-item a {
+  color: #fff;
+  font-weight: bold;
+  font-size: 18px;
+  transition: color 0.3s ease-in-out;
+}
+
+.nav-item a:hover {
+  color:#007acc;
+}
+
+/* Style the welcome section */
+.welcome-section {
+  text-align: center;
+  padding: 20px;
+  background-color: #ff4747;
+  color: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Style the product container */
+/* Style the product container */
+.product-container {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+}
+
+/* Add these styles to your existing CSS */
+.product-card {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px;
+    text-align: center;
+    width: 300px; /* Adjust the width of the product card */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+    max-width: 50%; /* Ensure the image fits within the product card */
+    height: auto; /* Automatically adjust the height while maintaining aspect ratio */
+}
+
+.product-card:hover {
+  transform: scale(1.05); /* Enlarge the card on hover */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); /* Add a stronger shadow on hover */
+}
+.product-card:hover img {
+  transform: scale(1.1); /* Enlarge the image on hover */
+}
+.product-card button {
+  background-color: #ff6b6b;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: 16px;
+}
+
+/* Change button background color on hover */
+.product-card button:hover {
+  background-color: #ff4747;
+  transform: scale(1.05); /* Enlarge the button slightly on hover */
+}
+/* Style the cart button */
+.cart-button a {
+  color: #fff;
+  font-size: 18px;
+  text-decoration: none;
+  display: flex;
+  align-items: center; /* Center the icon vertically */
+}
+
+.cart-button img {
+  margin-right: 3px; /* Add some spacing between the icon and text */
+  width: 35px; /* Set the width of the image to make it very small */
+  height: auto; /* Allow the image to maintain its aspect ratio */
+}
+/* Smooth scrolling for anchor links */
+.nav-item a[href^="#"] {
+    transition: all 0.3s ease-in-out;
+}
+
+.nav-item a[href^="#"]:hover {
+    color: #007acc;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+/* Center the "Our Goodies" header */
+.centered-header {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px; /* Add spacing below the header */
+}
+/* Center the contact section */
+.contact-section {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+/* Center the content within the contact section */
+.contact-info {
+  text-align: center;
+  margin-top: 20px; /* Add some spacing from the section header */
+}
+
+.contact-item {
+  margin-bottom: 20px; /* Add spacing between contact items */
+}
+/* CSS for the cart button and cart container */
+.cart-button {
+  background-color: #ff6b6b;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.cart-button:hover {
+  background-color: #ff4747;
+}
+
+.cart-container {
+  display: none;
+  position: fixed;
+  top: 50px;
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  max-width: 300px;
+  z-index: 1;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+/* Style for increment and decrement buttons */
+.increment-button,
+.decrement-button {
+    background-color: #ff4747;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 5px;
+    font-size: 16px; /* Adjust font size as needed */
+}
+
+/* Style for increment and decrement buttons on hover */
+.increment-button:hover,
+.decrement-button:hover {
+    background-color: #ff4747;
+}
+
